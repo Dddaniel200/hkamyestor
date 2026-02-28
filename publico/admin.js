@@ -69,3 +69,35 @@ async function deleteSuggestion(id) {
         renderSuggestionsForModeration();
     }
 }
+
+// ==================== HISTORIA ====================
+// Cargar la historia actual al entrar
+async function cargarHistoria() {
+    try {
+        const res = await fetch('/api/config');
+        const data = await res.json();
+        document.getElementById('historia-texto').value = data.valor || '';
+    } catch (err) { console.error("Error cargando historia"); }
+}
+
+// Guardar la nueva historia
+document.getElementById('historia-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const nuevoTexto = document.getElementById('historia-texto').value;
+    
+    try {
+        await fetch('/api/config', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ valor: nuevoTexto })
+        });
+        alert('✅ Historia actualizada correctamente');
+    } catch (err) { alert('❌ Error al guardar'); }
+});
+
+// Llama a cargarHistoria() cuando la página cargue (agrégalo en tu DOMContentLoaded inicial)
+document.addEventListener('DOMContentLoaded', () => {
+    cargarHistoria(); // <--- Agrega esta línea a tu inicio
+    // ... tus otras funciones
+});
+
