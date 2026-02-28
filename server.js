@@ -1,3 +1,17 @@
+const path = require('path'); // Agrega esto al principio con las otras constantes
+
+// --- Configuraciones iniciales ---
+app.use(cors());
+app.use(express.json());
+
+// Esta línea le dice a Render dónde están tus archivos (CSS, JS, imágenes)
+app.use(express.static(path.join(__dirname, 'publico')));
+
+// Esta ruta es la que quita el error "Cannot GET /"
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'publico', 'index.html'));
+});
+
 const express = require('express');
 const cors = require('cors');
 const mariadb = require('mariadb');
@@ -72,3 +86,4 @@ app.listen(PORT, () => {
     console.log(`📊 Conectado a la base de datos: hkamyestor`);
 
 });
+
