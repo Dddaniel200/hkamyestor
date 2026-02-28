@@ -1,33 +1,26 @@
-const path = require('path'); // Agrega esto al principio con las otras constantes
+const express = require('express');
+const cors = require('cors');
+const mariadb = require('mariadb');
+const path = require('path');
+require('dotenv').config();
+
+const app = express();
 
 // --- Configuraciones iniciales ---
 app.use(cors());
 app.use(express.json());
 
-// Esta línea le dice a Render dónde están tus archivos (CSS, JS, imágenes)
+// Servir archivos estáticos desde la carpeta 'publico'
+// (ESTO ARREGLA EL DISEÑO Y LOS ERRORES DE RUTA)
 app.use(express.static(path.join(__dirname, 'publico')));
 
-// Esta ruta es la que quita el error "Cannot GET /"
+// Ruta principal para cargar el index.html
+// (ESTO QUITA EL "CANNOT GET /")
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'publico', 'index.html'));
 });
 
-const express = require('express');
-const cors = require('cors');
-const mariadb = require('mariadb');
-require('dotenv').config();
-
-const app = express();
-
-// Configuraciones iniciales
-app.use(cors());
-app.use(express.json());
-app.use(express.static('../publico')); 
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/publico/index.html');
-});
-
-// Conexión a MariaDB
+// --- Conexión a MariaDB ---
 const pool = mariadb.createPool({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
@@ -36,7 +29,9 @@ const pool = mariadb.createPool({
     connectionLimit: 5
 });
 
-// 1. RUTA DE PRUEBA (Para ver en el navegador)
+// --- Rutas de la API ---
+
+// 1. RUTA DE PRUEBA
 app.get('/api/test', (req, res) => {
     res.json({ message: "API Conectada y funcionando" });
 });
@@ -47,16 +42,12 @@ app.post('/api/sugerencias', async (req, res) => {
     let conn;
     try {
         const { name, message, title, rating } = req.body;
-
         if (!name || !message) {
             return res.status(400).json({ error: "Faltan datos (nombre o mensaje)" });
         }
-
         conn = await pool.getConnection();
         const query = "INSERT INTO sugerencias (nombre, mensaje, titulo, rating) VALUES (?, ?, ?, ?)";
         await conn.query(query, [name, message, title || null, typeof rating !== 'undefined' ? rating : null]);
-
-        console.log("✅ Guardado exitoso en MariaDB (con titulo/rating si presentes)");
         res.json({ success: true, message: "Sugerencia guardada correctamente" });
     } catch (err) {
         console.error("❌ Error en la base de datos:", err);
@@ -80,10 +71,8 @@ app.get('/api/sugerencias', async (req, res) => {
     }
 });
 
-const PORT = 3000;
+// Puerto dinámico para Render
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor listo en http://localhost:${PORT}`);
-    console.log(`📊 Conectado a la base de datos: hkamyestor`);
-
+    console.log(`🚀 Servidor listo en el puerto ${PORT}`);
 });
-
