@@ -96,10 +96,13 @@ app.put('/api/config', async (req, res) => {
     finally { if (conn) conn.release(); }
 });
 
-// Ruta principal para evitar el "Cannot GET"
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'publico', 'index.html'));
+// Esta es la ruta que está fallando, cámbiala a esta:
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'publico', 'admin.html'));
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server en puerto ${PORT}`));
+app.listen(PORT, () => {
+    console.log(🚀 Servidor listo en el puerto ${PORT});
+});
+
