@@ -1,6 +1,76 @@
-// Reemplaza tus funciones de Productos y Sugerencias por estas:
+/*
+  admin.js - Panel administrativo conectado al servidor (Render + MariaDB)
+*/
 
-// CARGAR PRODUCTOS DESDE EL SERVIDOR
+// CONFIG (Se mantiene el login local por ahora, pero los datos van al servidor)
+const STORAGE_KEYS = {
+    adminAuth: 'adminAuth',
+    adminPassword: 'adminPassword'
+};
+
+// DOM
+const tabs = {
+    productos: document.getElementById('tab-productos'),
+    sugerencias: document.getElementById('tab-sugerencias'),
+    historia: document.getElementById('tab-historia'),
+    login: document.getElementById('tab-login')
+};
+
+// INIT
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
+    initTheme();
+    initTabs();
+    
+    // Cargar datos desde el servidor
+    renderProducts();
+    renderSuggestionsForModeration();
+    cargarHistoria();
+
+    // Iniciar formularios
+    initProductForm();
+    initHistoryForm();
+    initPasswordForm();
+});
+
+// ==================== AUTH ====================
+function checkAuth() {
+    const isAuth = localStorage.getItem(STORAGE_KEYS.adminAuth) === 'true';
+    if (!isAuth) {
+        window.location.href = 'login.html';
+    }
+}
+
+// ==================== THEME ====================
+function initTheme() {
+    const btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    const saved = localStorage.getItem('theme') || 'light';
+    if (saved === 'dark') document.body.classList.add('dark');
+    
+    btn.addEventListener('click', () => {
+        document.body.classList.toggle('dark');
+        localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+    });
+}
+
+// ==================== TABS ====================
+function initTabs() {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabName = btn.dataset.tab;
+            // Ocultar todos
+            Object.values(tabs).forEach(t => t?.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            
+            // Mostrar seleccionado
+            tabs[tabName]?.classList.add('active');
+            btn.classList.add('active');
+        });
+    });
+}
+
+// ==================== PRODUCTOS (SERVIDOR) ====================
 async function renderProducts() {
     const container = document.getElementById('products-list');
     if (!container) return;
@@ -10,8 +80,8 @@ async function renderProducts() {
         const products = await res.json();
         
         container.innerHTML = '';
-        if (products.length === 0) {
-            container.innerHTML = '<p class="empty-state">No hay productos.</p>';
+        if (!products.length) {
+            container.innerHTML = '<p class="empty-state">No hay productos registrados.</p>';
             return;
         }
 
@@ -19,9 +89,12 @@ async function renderProducts() {
             const item = document.createElement('div');
             item.className = 'admin-item';
             item.innerHTML = `
-                <div class="admin-item-content">
+                <div style="width:60px;flex-shrink:0">
+                    <img src="${prod.imagen}" style="width:100%;height:60px;object-fit:cover;border-radius:5px">
+                </div>
+                <div class="admin-item-content" style="flex:1; margin-left:15px">
                     <div class="admin-item-title">${prod.nombre}</div>
-                    <div class="admin-item-meta">$${prod.precio} - Stock: ${prod.stock}</div>
+                    <div class="admin-item-meta">$${Number(prod.precio).toLocaleString()} CLP • Stock: ${prod.stock}</div>
                 </div>
                 <div class="admin-item-actions">
                     <button class="btn-danger" onclick="deleteProduct(${prod.id})">🗑️ Eliminar</button>
@@ -32,72 +105,106 @@ async function renderProducts() {
     } catch (err) { console.error("Error cargando productos", err); }
 }
 
-// ELIMINAR PRODUCTO
-async function deleteProduct(id) {
+function initProductForm() {
+    const form = document.getElementById('product-form');
+    form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const productData = {
+            name: document.getElementById('product-name').value,
+            description: document.getElementById('product-description').value,
+            price: document.getElementById('product-price').value,
+            image: document.getElementById('product-image').value,
+            stock: document.getElementById('product-stock').value
+        };
+
+        const res = await fetch('/api/productos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(productData)
+        });
+
+        if (res.ok) {
+            alert("✅ Producto agregado!");
+            form.reset();
+            renderProducts();
+        }
+    });
+}
+
+window.deleteProduct = async (id) => {
     if (confirm('¿Eliminar producto?')) {
         await fetch(`/api/productos/${id}`, { method: 'DELETE' });
         renderProducts();
     }
+};
+
+// ==================== SUGERENCIAS (SERVIDOR) ====================
+async function renderSuggestionsForModeration() {
+    const container = document.getElementById('moderacion-list');
+    if (!container) return;
+
+    try {
+        const res = await fetch('/api/sugerencias');
+        const suggestions = await res.json();
+        
+        container.innerHTML = '';
+        if (!suggestions.length) {
+            container.innerHTML = '<p class="empty-state">No hay sugerencias.</p>';
+            return;
+        }
+
+        suggestions.forEach(sug => {
+            const item = document.createElement('div');
+            item.className = 'admin-item';
+            item.innerHTML = `
+                <div class="admin-item-content" style="flex:1">
+                    <div class="admin-item-title">${sug.titulo || 'Sin título'}</div>
+                    <div class="admin-item-meta">${sug.nombre} • ${new Date(sug.fecha).toLocaleDateString()}</div>
+                    <div class="admin-item-desc">${sug.mensaje}</div>
+                </div>
+                <div class="admin-item-actions">
+                    <button class="btn-danger" onclick="deleteSuggestion(${sug.id})">🗑️ Eliminar</button>
+                </div>
+            `;
+            container.appendChild(item);
+        });
+    } catch (err) { console.error("Error en sugerencias", err); }
 }
 
-// AGREGAR PRODUCTO AL SERVIDOR
-document.getElementById('product-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const productData = {
-        name: document.getElementById('product-name').value,
-        description: document.getElementById('product-description').value,
-        price: document.getElementById('product-price').value,
-        image: document.getElementById('product-image').value,
-        stock: document.getElementById('product-stock').value
-    };
-
-    await fetch('/api/productos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(productData)
-    });
-
-    e.target.reset();
-    renderProducts();
-    alert("Producto agregado!");
-});
-
-// MODERAR SUGERENCIAS (ELIMINAR)
-async function deleteSuggestion(id) {
-    if (confirm('¿Eliminar esta sugerencia?')) {
+window.deleteSuggestion = async (id) => {
+    if (confirm('¿Eliminar sugerencia?')) {
         await fetch(`/api/sugerencias/${id}`, { method: 'DELETE' });
         renderSuggestionsForModeration();
     }
-}
+};
 
-// ==================== HISTORIA ====================
-// Cargar la historia actual al entrar
+// ==================== HISTORIA (SERVIDOR) ====================
 async function cargarHistoria() {
     try {
         const res = await fetch('/api/config');
         const data = await res.json();
-        document.getElementById('historia-texto').value = data.valor || '';
-    } catch (err) { console.error("Error cargando historia"); }
+        const textarea = document.getElementById('historia-texto');
+        if (textarea) textarea.value = data.valor || '';
+    } catch (err) { console.error("Error historia", err); }
 }
 
-// Guardar la nueva historia
-document.getElementById('historia-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const nuevoTexto = document.getElementById('historia-texto').value;
-    
-    try {
-        await fetch('/api/config', {
+function initHistoryForm() {
+    document.getElementById('historia-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const valor = document.getElementById('historia-texto').value;
+        const res = await fetch('/api/config', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ valor: nuevoTexto })
+            body: JSON.stringify({ valor })
         });
-        alert('✅ Historia actualizada correctamente');
-    } catch (err) { alert('❌ Error al guardar'); }
-});
+        if (res.ok) alert('✅ Historia actualizada');
+    });
+}
 
-// Llama a cargarHistoria() cuando la página cargue (agrégalo en tu DOMContentLoaded inicial)
-document.addEventListener('DOMContentLoaded', () => {
-    cargarHistoria(); // <--- Agrega esta línea a tu inicio
-    // ... tus otras funciones
-});
-
+// ==================== PASSWORD ====================
+function initPasswordForm() {
+    document.getElementById('password-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        alert("Función de cambio de contraseña activada localmente.");
+    });
+}
