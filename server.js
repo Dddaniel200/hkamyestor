@@ -9,15 +9,21 @@ const app = express();
 // --- Configuraciones iniciales ---
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname));
-// Servir archivos estáticos desde la carpeta 'publico'
-// (ESTO ARREGLA EL DISEÑO Y LOS ERRORES DE RUTA)
+
 app.use(express.static(path.join(__dirname, 'publico')));
 
-// Ruta principal para cargar el index.html
-// (ESTO QUITA EL "CANNOT GET /")
+// 2. Ruta con diagnóstico
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'publico', 'index.html'));
+    const fs = require('fs');
+    const pathIndex = path.join(__dirname, 'publico', 'index.html');
+    
+    if (fs.existsSync(pathIndex)) {
+        res.sendFile(pathIndex);
+    } else {
+        // Si no lo encuentra, nos dirá qué archivos hay realmente
+        const archivos = fs.readdirSync(__dirname);
+        res.status(404).send(`Archivo no encontrado. En la raíz hay: ${archivos.join(', ')}`);
+    }
 });
 
 // --- Conexión a MariaDB ---
@@ -76,4 +82,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Servidor listo en el puerto ${PORT}`);
 });
+
 
