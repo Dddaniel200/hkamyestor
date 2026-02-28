@@ -9,21 +9,24 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'publico')));
 
+// --- CONFIGURACIÓN REFORZADA PARA AIVEN ---
 const pool = mariadb.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     port: 24498,
-    connectionLimit: 5
+    connectionLimit: 5,
+    // Agregamos SSL y más tiempo de espera para evitar el Timeout
+    connectTimeout: 20000,
+    ssl: { rejectUnauthorized: false } 
 });
 
-// FUNCIÓN CORREGIDA (Sin espacios)
 async function inicializarBD() {
     let conn;
     try {
         conn = await pool.getConnection();
-        console.log("✅ Conexión con Aiven exitosa");
+        console.log("✅ Conexión con Aiven exitosa (con SSL)");
         
         await conn.query(`CREATE TABLE IF NOT EXISTS productos (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -45,7 +48,7 @@ async function inicializarBD() {
         }
         console.log("🚀 Tablas verificadas y listas");
     } catch (err) {
-        console.error("❌ Error en BD:", err);
+        console.error("❌ Error en BD:", err.message);
     } finally {
         if (conn) conn.release();
     }
