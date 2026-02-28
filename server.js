@@ -9,7 +9,7 @@ const app = express();
 // --- Configuraciones iniciales ---
 app.use(cors());
 app.use(express.json());
-
+app.use(express.static(path.join(__dirname));
 // Servir archivos estáticos desde la carpeta 'publico'
 // (ESTO ARREGLA EL DISEÑO Y LOS ERRORES DE RUTA)
 app.use(express.static(path.join(__dirname, 'publico')));
@@ -76,3 +76,4 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Servidor listo en el puerto ${PORT}`);
 });
+
