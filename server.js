@@ -8,7 +8,10 @@ const app = express();
 // Configuraciones iniciales
 app.use(cors());
 app.use(express.json());
-app.use(express.static('../public')); 
+app.use(express.static('../publico')); 
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/publico/index.html');
+});
 
 // Conexión a MariaDB
 const pool = mariadb.createPool({
@@ -67,4 +70,5 @@ const PORT = 3000;
 app.listen(PORT, () => {
     console.log(`🚀 Servidor listo en http://localhost:${PORT}`);
     console.log(`📊 Conectado a la base de datos: hkamyestor`);
+
 });
