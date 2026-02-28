@@ -5,28 +5,13 @@ const path = require('path');
 require('dotenv').config();
 
 const app = express();
-
-// --- Configuraciones iniciales ---
 app.use(cors());
 app.use(express.json());
 
+// Servir archivos de la carpeta 'publico'
 app.use(express.static(path.join(__dirname, 'publico')));
 
-// 2. Ruta con diagnóstico
-app.get('/', (req, res) => {
-    const fs = require('fs');
-    const pathIndex = path.join(__dirname, 'publico', 'index.html');
-    
-    if (fs.existsSync(pathIndex)) {
-        res.sendFile(pathIndex);
-    } else {
-        // Si no lo encuentra, nos dirá qué archivos hay realmente
-        const archivos = fs.readdirSync(__dirname);
-        res.status(404).send(`Archivo no encontrado. En la raíz hay: ${archivos.join(', ')}`);
-    }
-});
-
-// --- Conexión a MariaDB ---
+// Conexión a MariaDB
 const pool = mariadb.createPool({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
@@ -35,52 +20,86 @@ const pool = mariadb.createPool({
     connectionLimit: 5
 });
 
-// --- Rutas de la API ---
-
-// 1. RUTA DE PRUEBA
-app.get('/api/test', (req, res) => {
-    res.json({ message: "API Conectada y funcionando" });
-});
-
-// 2. RUTA PARA GUARDAR (POST)
-app.post('/api/sugerencias', async (req, res) => {
-    console.log("📩 Intento de guardado recibido:", req.body);
+// --- RUTAS DE PRODUCTOS ---
+app.get('/api/productos', async (req, res) => {
     let conn;
     try {
-        const { name, message, title, rating } = req.body;
-        if (!name || !message) {
-            return res.status(400).json({ error: "Faltan datos (nombre o mensaje)" });
-        }
         conn = await pool.getConnection();
-        const query = "INSERT INTO sugerencias (nombre, mensaje, titulo, rating) VALUES (?, ?, ?, ?)";
-        await conn.query(query, [name, message, title || null, typeof rating !== 'undefined' ? rating : null]);
-        res.json({ success: true, message: "Sugerencia guardada correctamente" });
-    } catch (err) {
-        console.error("❌ Error en la base de datos:", err);
-        res.status(500).json({ error: err.message });
-    } finally {
-        if (conn) conn.release();
-    }
+        const rows = await conn.query("SELECT * FROM productos ORDER BY id DESC");
+        res.json(rows);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+    finally { if (conn) conn.release(); }
 });
 
-// 3. RUTA PARA LEER (GET)
+app.post('/api/productos', async (req, res) => {
+    const { name, description, price, image, stock } = req.body;
+    let conn;
+    try {
+        conn = await pool.getConnection();
+        await conn.query("INSERT INTO productos (nombre, descripcion, precio, imagen, stock) VALUES (?, ?, ?, ?, ?)", 
+        [name, description, price, image, stock]);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+    finally { if (conn) conn.release(); }
+});
+
+app.delete('/api/productos/:id', async (req, res) => {
+    let conn;
+    try {
+        conn = await pool.getConnection();
+        await conn.query("DELETE FROM productos WHERE id = ?", [req.params.id]);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+    finally { if (conn) conn.release(); }
+});
+
+// --- RUTAS DE SUGERENCIAS ---
 app.get('/api/sugerencias', async (req, res) => {
     let conn;
     try {
         conn = await pool.getConnection();
-        const rows = await conn.query("SELECT id, nombre, mensaje, titulo, rating, fecha FROM sugerencias ORDER BY fecha DESC");
+        const rows = await conn.query("SELECT * FROM sugerencias ORDER BY fecha DESC");
         res.json(rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    } finally {
-        if (conn) conn.release();
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
+    finally { if (conn) conn.release(); }
 });
 
-// Puerto dinámico para Render
+app.delete('/api/sugerencias/:id', async (req, res) => {
+    let conn;
+    try {
+        conn = await pool.getConnection();
+        await conn.query("DELETE FROM sugerencias WHERE id = ?", [req.params.id]);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+    finally { if (conn) conn.release(); }
+});
+
+// --- RUTA HISTORIA (CONFIG) ---
+app.get('/api/config', async (req, res) => {
+    let conn;
+    try {
+        conn = await pool.getConnection();
+        const rows = await conn.query("SELECT valor FROM configuracion WHERE clave = 'historia'");
+        res.json(rows[0] || { valor: "Nuestra historia..." });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+    finally { if (conn) conn.release(); }
+});
+
+app.put('/api/config', async (req, res) => {
+    const { valor } = req.body;
+    let conn;
+    try {
+        conn = await pool.getConnection();
+        await conn.query("UPDATE configuracion SET valor = ? WHERE clave = 'historia'", [valor]);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+    finally { if (conn) conn.release(); }
+});
+
+// Ruta principal para evitar el "Cannot GET"
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'publico', 'index.html'));
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`🚀 Servidor listo en el puerto ${PORT}`);
-});
-
-
+app.listen(PORT, () => console.log(`🚀 Server en puerto ${PORT}`));
