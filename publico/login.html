@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Login</title>
+</head>
+<body>
+
+<h2>Panel Administrativo</h2>
+
+<form id="loginForm">
+    <input type="password" id="password" placeholder="Contraseña" required>
+    <button type="submit">Entrar</button>
+</form>
+
+<p id="error" style="color:red;"></p>
+
+<script>
+const ADMIN_PASSWORD = "123456"; // cámbiala
+
+document.getElementById("loginForm").addEventListener("submit", function(e){
+    e.preventDefault();
+
+    const password = document.getElementById("password").value;
+
+    if(password === ADMIN_PASSWORD){
+        localStorage.setItem("adminAuth", "true");
+        localStorage.setItem("loginTime", Date.now());
+        window.location.href = "admin.html";
+    } else {
+        document.getElementById("error").textContent = "Contraseña incorrecta";
+    }
+});
+</script>
+
+</body>
+</html>

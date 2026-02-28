@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Admin | HKAMYESTOR</title>
+    <meta name="description" content="Panel de administración de HKAMYESTOR">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <!-- CONTROL DE TEMA -->
+    <button id="theme-toggle" class="theme-toggle" aria-label="Cambiar modo oscuro">
+        🌙
+    </button>
+
+    <!-- HEADER PRINCIPAL -->
+    <header class="page-header">
+        <div class="header-content">
+            <h1>Panel de Administración</h1>
+            <p>Gestiona productos y sugerencias</p>
+        </div>
+    </header>
+
+    <!-- NAVEGACIÓN -->
+    <nav class="main-nav">
+        <ul>
+            <li><a href="dashboard.html" class="active">Dashboard</a></li>
+            <li><a href="index.html">Volver a Tienda</a></li>
+            <li><button id="logout-btn" style="background:transparent; border:none; color:var(--danger); cursor:pointer; font-weight:600; padding:8px 12px;">Salir</button></li>
+        </ul>
+    </nav>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="main-content">
+
+        <!-- SECCIÓN INTRO -->
+        <section class="intro-section">
+            <h2>Bienvenido, Administrador</h2>
+            <p>Gestiona productos y moderación de sugerencias</p>
+        </section>
+
+        <!-- TABS -->
+        <div class="admin-tabs">
+            <button class="tab-btn active" data-tab="productos">Productos</button>
+            <button class="tab-btn" data-tab="sugerencias">Sugerencias</button>
+            <button class="tab-btn" data-tab="login">Cambiar Contraseña</button>
+        </div>
+
+        <!-- TAB: PRODUCTOS -->
+        <section id="tab-productos" class="tab-content active">
+            <div class="suggestions-module">
+                
+                <!-- FORMULARIO PRODUCTO -->
+                <article class="form-container">
+                    <h2>Agregar Producto</h2>
+                    <form id="product-form">
+                        
+                        <div class="form-group">
+                            <label for="product-name">Nombre del Producto</label>
+                            <input type="text" id="product-name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="product-description">Descripción</label>
+                            <textarea id="product-description" rows="4" required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="product-price">Precio (CLP)</label>
+                            <input type="number" id="product-price" min="0" step="1000" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="product-image">URL Imagen</label>
+                            <input type="url" id="product-image" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="product-stock">Stock</label>
+                            <input type="number" id="product-stock" min="0" value="1" required>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">Agregar Producto</button>
+                            <button type="reset" class="btn-secondary">Limpiar</button>
+                        </div>
+
+                    </form>
+                </article>
+
+                <!-- LISTADO PRODUCTOS -->
+                <article class="list-container">
+                    <h2>Productos Registrados</h2>
+                    <div id="products-list" class="admin-list">
+                        <p class="empty-state">No hay productos registrados.</p>
+                    </div>
+                </article>
+
+            </div>
+        </section>
+
+        <!-- TAB: SUGERENCIAS -->
+        <section id="tab-sugerencias" class="tab-content">
+            <article class="form-container" style="max-width: 100%;">
+                <h2>Moderar Sugerencias</h2>
+                <div id="moderacion-list" class="admin-list">
+                    <p class="empty-state">No hay sugerencias para moderar.</p>
+                </div>
+            </article>
+        </section>
+
+        <!-- TAB: CONTRASEÑA -->
+        <section id="tab-login" class="tab-content">
+            <article class="form-container" style="max-width: 500px; margin: 0 auto;">
+                <h2>Cambiar Contraseña</h2>
+                <form id="password-form">
+                    
+                    <div class="form-group">
+                        <label for="current-password">Contraseña Actual</label>
+                        <input type="password" id="current-password" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="new-password">Nueva Contraseña</label>
+                        <input type="password" id="new-password" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm-password">Confirmar Nueva Contraseña</label>
+                        <input type="password" id="confirm-password" required>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Actualizar</button>
+
+                </form>
+            </article>
+        </section>
+
+    </main>
+    <button onclick="logout()">Cerrar sesión</button>
+
+     <script>
+     function logout(){
+     localStorage.clear();
+     window.location.href = "login.html";
+     }
+</script>
+    <!-- FOOTER -->
+    <footer class="main-footer">
+        <p>© 2026 HKAMYESTOR - Panel Administrativo</p>
+    </footer>
+
+    <script type="module" src="admin.js"></script>
+</body>
+</html>

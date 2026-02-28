@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="Sugerencias HKAMYESTOR" content="width=device-width, initial-scale=1.0">
+
+    <title>Sugerencias | HKMAYESTOR</title>
+    <meta name="description" content="Envía sugerencias y mejora la experiencia de HKMAYESTOR. Tu opinión construye el futuro.">
+    <link rel="stylesheet" href="css/styles.css">
+
+</head>
+
+<body>
+    <!-- CONTROL DE TEMA -->
+    <button id="theme-toggle" class="theme-toggle" aria-label="Cambiar modo oscuro">
+        🌙
+    </button>
+
+    <!-- HEADER PRINCIPAL -->
+    <header class="page-header">
+        <div class="header-content">
+            <h1>Centro de Sugerencias</h1>
+            <p>Extensión oficial de HKAMYESTOR</p>
+        </div>
+    </header>
+
+    <!-- NAVEGACIÓN -->
+    <nav class="main-nav">
+        <ul>
+            <li><a href="index.html">Tienda</a></li>
+            <li><a href="historia.html">Historia</a></li>
+            <li><a href="sugerencias.html" class="active">Sugerencias</a></li>
+        </ul>
+    </nav>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="main-content">
+
+        <!-- SECCIÓN INTRO -->
+        <section class="intro-section">
+            <h2>Construimos el futuro contigo</h2>
+            <p>Comparte ideas, mejoras o comentarios para fortalecer HKAMYESTOR.</p>
+        </section>
+
+        <!-- CONTENEDOR GENERAL -->
+        <section class="suggestions-module">
+
+            <!-- FORMULARIO -->
+            <article class="form-container">
+                <h2>Enviar nueva sugerencia</h2>
+
+                <form id="suggestion-form" autocomplete="off">
+
+                    <div class="form-group">
+                        <label for="name">Nombre</label>
+                        <input type="text" id="name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="title">Título</label>
+                        <input type="text" id="title" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="message">Mensaje</label>
+                        <textarea id="message" rows="4" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Importancia</label>
+                        <div class="rating-system">
+                            <div class="stars">
+                                <button type="button" class="star" data-value="1">★</button>
+                                <button type="button" class="star" data-value="2">★</button>
+                                <button type="button" class="star" data-value="3">★</button>
+                                <button type="button" class="star" data-value="4">★</button>
+                                <button type="button" class="star" data-value="5">★</button>
+                            </div>
+                            <span id="rating-value">0 / 5</span>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Enviar</button>
+                        <button type="reset" class="btn-secondary">Limpiar</button>
+                    </div>
+
+                </form>
+            </article>
+
+            <!-- LISTADO -->
+            <article class="list-container">
+                <header class="list-header">
+                    <h2>Comunidad</h2>
+
+                    <div id="admin-controls" class="admin-controls hidden">
+                        <label for="filter-rating">Filtrar:</label>
+                        <select id="filter-rating">
+                            <option value="all">Todas</option>
+                            <option value="5">5★</option>
+                            <option value="4">4★</option>
+                            <option value="3">3★</option>
+                            <option value="2">2★</option>
+                            <option value="1">1★</option>
+                        </select>
+                    </div>
+                </header>
+
+                <div id="suggestions-container" class="suggestions-grid">
+                    <p class="empty-state">
+                        Aún no hay sugerencias registradas.
+                    </p>
+                </div>
+
+            </article>
+
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="main-footer">
+        <p>© 2026 HKAMYESTOR</p>
+        <p>Extensión de participación y mejora continua</p>
+    </footer>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
