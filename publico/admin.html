@@ -10,20 +10,17 @@
     <link rel="stylesheet" href="admin.css">
 </head>
 <body>
-    <!-- CONTROL DE TEMA -->
     <button id="theme-toggle" class="theme-toggle" aria-label="Cambiar modo oscuro">
         🌙
     </button>
 
-    <!-- HEADER PRINCIPAL -->
     <header class="page-header">
         <div class="header-content">
             <h1>Panel de Administración</h1>
-            <p>Gestiona productos y sugerencias</p>
+            <p>Gestiona productos, sugerencias e historia</p>
         </div>
     </header>
 
-    <!-- NAVEGACIÓN -->
     <nav class="main-nav">
         <ul>
             <li><a href="dashboard.html" class="active">Dashboard</a></li>
@@ -32,27 +29,23 @@
         </ul>
     </nav>
 
-    <!-- CONTENIDO PRINCIPAL -->
     <main class="main-content">
 
-        <!-- SECCIÓN INTRO -->
         <section class="intro-section">
             <h2>Bienvenido, Administrador</h2>
-            <p>Gestiona productos y moderación de sugerencias</p>
+            <p>Gestiona productos, moderación de sugerencias y la historia de la tienda</p>
         </section>
 
-        <!-- TABS -->
         <div class="admin-tabs">
             <button class="tab-btn active" data-tab="productos">Productos</button>
             <button class="tab-btn" data-tab="sugerencias">Sugerencias</button>
+            <button class="tab-btn" data-tab="historia">Historia</button>
             <button class="tab-btn" data-tab="login">Cambiar Contraseña</button>
         </div>
 
-        <!-- TAB: PRODUCTOS -->
         <section id="tab-productos" class="tab-content active">
             <div class="suggestions-module">
                 
-                <!-- FORMULARIO PRODUCTO -->
                 <article class="form-container">
                     <h2>Agregar Producto</h2>
                     <form id="product-form">
@@ -90,7 +83,6 @@
                     </form>
                 </article>
 
-                <!-- LISTADO PRODUCTOS -->
                 <article class="list-container">
                     <h2>Productos Registrados</h2>
                     <div id="products-list" class="admin-list">
@@ -101,7 +93,6 @@
             </div>
         </section>
 
-        <!-- TAB: SUGERENCIAS -->
         <section id="tab-sugerencias" class="tab-content">
             <article class="form-container" style="max-width: 100%;">
                 <h2>Moderar Sugerencias</h2>
@@ -111,7 +102,19 @@
             </article>
         </section>
 
-        <!-- TAB: CONTRASEÑA -->
+        <section id="tab-historia" class="tab-content">
+            <article class="form-container" style="max-width: 800px; margin: 0 auto;">
+                <h2>Editar Historia de la Tienda</h2>
+                <form id="historia-form">
+                    <div class="form-group">
+                        <label for="historia-texto">Texto de la Historia</label>
+                        <textarea id="historia-texto" rows="10" placeholder="Escribe aquí la historia de HKAMYESTOR..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">Guardar Historia</button>
+                </form>
+            </article>
+        </section>
+
         <section id="tab-login" class="tab-content">
             <article class="form-container" style="max-width: 500px; margin: 0 auto;">
                 <h2>Cambiar Contraseña</h2>
@@ -139,15 +142,18 @@
         </section>
 
     </main>
-    <button onclick="logout()">Cerrar sesión</button>
+    
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <button onclick="logout()" class="btn-secondary">Cerrar sesión</button>
+    </div>
 
-     <script>
-     function logout(){
-     localStorage.clear();
-     window.location.href = "login.html";
-     }
-</script>
-    <!-- FOOTER -->
+    <script>
+        function logout(){
+            localStorage.clear();
+            window.location.href = "login.html";
+        }
+    </script>
+    
     <footer class="main-footer">
         <p>© 2026 HKAMYESTOR - Panel Administrativo</p>
     </footer>
