@@ -1,6 +1,6 @@
-
 import { SuggestionsService } from "./modules/suggestions.service.js";
 import { CONFIG } from "./core/config.js";
+import { Api } from "./core/api.js"; // Importamos Api para traer los productos
 
 const selectors = {
   themeToggle: '#theme-toggle',
@@ -11,6 +11,7 @@ const selectors = {
   title: '#title',
   message: '#message',
   suggestionsContainer: '#suggestions-container',
+  productsContainer: '#productos-lista', // Asegúrate de que este ID exista en tu index.html
   filterSelect: '#filter-rating',
   adminControls: '#admin-controls'
 };
@@ -21,8 +22,41 @@ document.addEventListener('DOMContentLoaded', () => {
   initForm();
   initFilter();
   renderSuggestions();
+  renderProducts(); // <-- NUEVA FUNCIÓN PARA LOS BOLSOS
   revealAdminIfNeeded();
 });
+
+/* PRODUCTOS: Cargar desde Aiven */
+async function renderProducts() {
+  const container = document.querySelector('#productos-lista') || document.querySelector('.productos-grid');
+  if (!container) return;
+
+  try {
+    const productos = await Api.getProducts();
+    container.innerHTML = '';
+
+    if (!productos || productos.length === 0) {
+      container.innerHTML = '<p class="empty-state">No hay productos disponibles por ahora.</p>';
+      return;
+    }
+
+    productos.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'producto-card';
+      card.innerHTML = `
+        <img src="${p.imagen || 'https://via.placeholder.com/200'}" alt="${p.nombre}">
+        <h3>${p.nombre}</h3>
+        <p>${p.descripcion || ''}</p>
+        <span class="precio">$${Number(p.precio).toLocaleString('es-CL')} CLP</span>
+        <button class="btn-comprar">Ver Detalle</button>
+      `;
+      container.appendChild(card);
+    });
+  } catch (err) {
+    console.error('Error cargando productos:', err);
+    container.innerHTML = '<p class="error-state">Error al conectar con el servidor.</p>';
+  }
+}
 
 /* THEME */
 function initTheme() {
@@ -30,12 +64,15 @@ function initTheme() {
   const saved = localStorage.getItem('theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   if (saved === 'dark') document.body.classList.add('dark');
   updateThemeButton();
-  btn.addEventListener('click', () => {
-    document.body.classList.toggle('dark');
-    localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
-    updateThemeButton();
-  });
+  if (btn) {
+    btn.addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+      updateThemeButton();
+    });
+  }
 }
+
 function updateThemeButton() {
   const btn = query(selectors.themeToggle);
   if (!btn) return;
@@ -58,10 +95,12 @@ function initRating() {
   });
   previewRating(0);
 }
+
 function setRating(value) {
   currentRating = value;
   previewRating(value);
 }
+
 function previewRating(value) {
   qAll(selectors.stars).forEach(btn => {
     const v = Number(btn.dataset.value || 0);
@@ -88,33 +127,22 @@ function initForm() {
     }
 
     const suggestion = {
-      id: Date.now(),
       name: name || 'Anónimo',
       title,
       message,
-      rating,
-      createdAt: new Date().toISOString()
+      rating
     };
 
-    // Si está habilitado el backend, enviamos al servidor. Si falla, guardamos localmente.
-    if (CONFIG && CONFIG.USE_BACKEND) {
-      try {
-        await SuggestionsService.create(suggestion);
-      } catch (err) {
-        console.error('Error enviando sugerencia al backend, guardando localmente', err);
-        const list = loadSuggestions();
-        list.unshift(suggestion);
-        saveSuggestions(list);
-      }
-    } else {
-      const list = loadSuggestions();
-      list.unshift(suggestion);
-      saveSuggestions(list);
+    try {
+      await SuggestionsService.create(suggestion);
+      form.reset();
+      setRating(0);
+      alert('¡Sugerencia enviada con éxito!');
+      await renderSuggestions();
+    } catch (err) {
+      console.error('Error enviando sugerencia:', err);
+      alert('Hubo un problema al enviar tu sugerencia.');
     }
-
-    form.reset();
-    setRating(0);
-    await renderSuggestions();
   });
 
   form.addEventListener('reset', () => {
@@ -129,7 +157,7 @@ function initFilter() {
   select.addEventListener('change', () => renderSuggestions());
 }
 
-/* RENDER */
+/* RENDER SUGERENCIAS */
 async function renderSuggestions() {
   const container = query(selectors.suggestionsContainer);
   if (!container) return;
@@ -139,82 +167,42 @@ async function renderSuggestions() {
 
   container.innerHTML = '';
   if (!list.length) {
-    const p = document.createElement('p');
-    p.className = 'empty-state';
-    p.textContent = 'Aún no hay sugerencias registradas.';
-    container.appendChild(p);
+    container.innerHTML = '<p class="empty-state">Aún no hay sugerencias registradas.</p>';
     return;
   }
 
   list.forEach(s => {
     const card = document.createElement('article');
     card.className = 'suggestion-card';
-
-    const h3 = document.createElement('div');
-    h3.className = 'suggestion-title';
-    h3.textContent = s.title;
-
-    const meta = document.createElement('div');
-    meta.className = 'suggestion-meta';
-    meta.innerHTML = `<span class="kv">${escapeHtml(s.name)}</span> • <span>${new Date(s.createdAt).toLocaleString()}</span>`;
-
-    const stars = document.createElement('div');
-    stars.className = 'stars';
-    for (let i = 1; i <= 5; i++) {
-      const star = document.createElement('span');
-      star.textContent = '★';
-      star.style.color = i <= s.rating ? getComputedStyle(document.documentElement).getPropertyValue('--accent-2') || '#ffb020' : 'var(--muted)';
-      star.style.marginRight = '4px';
-      stars.appendChild(star);
-    }
-
-    const msg = document.createElement('p');
-    msg.textContent = s.message;
-    msg.style.marginTop = '8px';
-    msg.style.whiteSpace = 'pre-wrap';
-
-    card.appendChild(h3);
-    card.appendChild(meta);
-    card.appendChild(stars);
-    card.appendChild(msg);
+    card.innerHTML = `
+      <div class="suggestion-title">${escapeHtml(s.title)}</div>
+      <div class="suggestion-meta">
+        <span class="kv">${escapeHtml(s.name)}</span> • 
+        <span>${new Date(s.createdAt).toLocaleString()}</span>
+      </div>
+      <div class="stars">
+        ${'★'.repeat(s.rating).padEnd(5, '☆')}
+      </div>
+      <p style="margin-top: 8px; white-space: pre-wrap;">${escapeHtml(s.message)}</p>
+    `;
     container.appendChild(card);
   });
 }
 
-/* STORAGE */
 async function loadSuggestions() {
   try {
-    if (CONFIG && CONFIG.USE_BACKEND) {
-      try {
-        const data = await SuggestionsService.getAll();
-        return Array.isArray(data) ? data : [];
-      } catch (err) {
-        console.error('Error al obtener sugerencias del backend:', err);
-        // fallback a localStorage
-      }
-    }
-    const raw = localStorage.getItem('suggestions');
-    return raw ? JSON.parse(raw) : [];
+    return await SuggestionsService.getAll();
   } catch (e) {
     console.warn('No se pudieron cargar sugerencias:', e);
     return [];
   }
 }
-function saveSuggestions(list) {
-  try {
-    localStorage.setItem('suggestions', JSON.stringify(list));
-  } catch (e) {
-    console.warn('No se pudieron guardar sugerencias:', e);
-  }
-}
 
-/* ADMIN: muestra controles solo si isAdmin=true en localStorage */
 function revealAdminIfNeeded() {
   const admin = localStorage.getItem('isAdmin') === 'true';
   const el = query(selectors.adminControls);
   if (!el) return;
   if (admin) el.classList.remove('hidden');
-  else el.classList.add('hidden');
 }
 
 /* UTIL */
