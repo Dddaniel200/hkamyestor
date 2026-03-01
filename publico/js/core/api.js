@@ -1,5 +1,5 @@
-// Asegúrate de que tu Api.js sea exactamente así
-const BASE_URL = 'http://localhost:3000/api';
+// js/core/api.js corregido
+const BASE_URL = '/api'; // Quitamos localhost para que funcione en Render
 
 export const Api = {
     async getSuggestions() {
@@ -8,7 +8,6 @@ export const Api = {
     },
 
     async createSuggestion(data) {
-        // Esta es la parte que envía a MariaDB
         const response = await fetch(`${BASE_URL}/sugerencias`, {
             method: 'POST',
             headers: { 
@@ -16,6 +15,12 @@ export const Api = {
             },
             body: JSON.stringify(data)
         });
+        return await response.json();
+    },
+
+    // Agregué esta función que te faltaba para los productos de la tienda
+    async getProducts() {
+        const response = await fetch(`${BASE_URL}/productos`);
         return await response.json();
     }
 };
